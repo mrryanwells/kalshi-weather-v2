@@ -1,0 +1,10 @@
+{
+  "markets": [
+    {
+      "ticker": "KXHIGHNY-24DEC31-B35",
+      "series_ticker": "KXHIGHNY",
+      "close_time": "2026-12-31T23:00:00Z"
+    }
+  ],
+  "cursor": null
+}
