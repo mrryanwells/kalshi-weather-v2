@@ -1,0 +1,20 @@
+<!doctype html><html><body>
+<h1>Backtest Run #{{ run.id }}</h1>
+<p><a href="/backtests">Back</a></p>
+<ul>
+<li>Trades: {{ run.num_trades }}</li>
+<li>Win rate: {{ run.win_rate }}</li>
+<li>Realized P/L: {{ run.realized_pl }}</li>
+<li>Avg P/L trade: {{ run.avg_pl_per_trade }}</li>
+<li>Max drawdown: {{ run.max_drawdown }}</li>
+<li>P/L by hour: {{ run.pnl_by_hour_json }}</li>
+</ul>
+<table border="1" cellpadding="6">
+<thead><tr><th>Market</th><th>Entry time</th><th>Exit time</th><th>Entry</th><th>Exit</th><th>Qty</th><th>P/L</th></tr></thead>
+<tbody>
+{% for t in trades %}
+<tr><td>{{ t.market_ticker }}</td><td>{{ t.entry_time }}</td><td>{{ t.exit_time }}</td><td>{{ t.entry_price }}</td><td>{{ t.exit_price }}</td><td>{{ t.quantity }}</td><td>{{ t.pnl }}</td></tr>
+{% else %}<tr><td colspan="7">No trades.</td></tr>{% endfor %}
+</tbody>
+</table>
+</body></html>

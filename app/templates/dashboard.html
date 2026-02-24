@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Kalshi Temp Scanner</title></head>
+  <body>
+    <h1>Kalshi Temp Scanner</h1>
+    <p>Series: {{ series_tickers|join(', ') }}</p>
+    <p>WebSocket: <strong>{% if ws_status.connected %}connected{% else %}disconnected{% endif %}</strong> | Last update: {{ ws_status.last_update_at or '-' }}</p>
+    <p><a href="/paper/trades">Trade journal</a> | <a href="/paper/positions">Positions</a> | <a href="/api/paper/trades.csv">CSV export</a> | <a href="/backtests">Backtests</a></p>
+
+    <h2>Manual Paper Order</h2>
+    <form method="post" action="/paper/orders">
+      <label>Market ticker <input name="market_ticker" required /></label>
+      <label>Side <select name="side"><option value="yes">yes</option><option value="no">no</option></select></label>
+      <label>Action <select name="action"><option value="buy">buy</option><option value="sell">sell</option></select></label>
+      <label>Limit price <input name="limit_price" type="number" min="1" max="99" required /></label>
+      <label>Quantity <input name="quantity" type="number" min="1" required /></label>
+      <label>Notes <input name="notes" /></label>
+      <button type="submit">Submit paper order</button>
+    </form>
+
+    <h2>Opportunities</h2>
+    <table border="1" cellpadding="6">
+      <thead><tr><th>Market</th><th>Score</th><th>YES Bid</th><th>NO Bid</th><th>Implied YES Ask</th><th>Spread</th><th>YES Qty</th><th>NO Qty</th><th>Close</th></tr></thead>
+      <tbody>
+      {% for row in opportunities %}
+      <tr><td>{{ row.market_ticker }}</td><td>{{ '%.4f' % row.score }}</td><td>{{ row.best_yes_bid }}</td><td>{{ row.best_no_bid }}</td><td>{{ row.implied_yes_ask }}</td><td>{{ row.spread }}</td><td>{{ row.top_yes_qty }}</td><td>{{ row.top_no_qty }}</td><td>{{ row.close_time or '-' }}</td></tr>
+      {% else %}<tr><td colspan="9">No data yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

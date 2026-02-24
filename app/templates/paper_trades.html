@@ -1,0 +1,12 @@
+<!doctype html><html><body>
+<h1>Paper Trade Journal</h1>
+<p><a href="/">Back</a></p>
+<table border="1" cellpadding="6">
+<thead><tr><th>Time</th><th>Market</th><th>Side</th><th>Action</th><th>Price</th><th>Qty</th><th>Notes</th></tr></thead>
+<tbody>
+{% for row in rows %}
+<tr><td>{{ row.created_at }}</td><td>{{ row.market_ticker }}</td><td>{{ row.side }}</td><td>{{ row.action }}</td><td>{{ row.price }}</td><td>{{ row.quantity }}</td><td>{{ row.notes or '-' }}</td></tr>
+{% else %}<tr><td colspan="7">No fills yet.</td></tr>{% endfor %}
+</tbody>
+</table>
+</body></html>

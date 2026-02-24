@@ -1,0 +1,21 @@
+<!doctype html><html><body>
+<h1>Backtests</h1>
+<p><a href="/">Back</a></p>
+<form method="post" action="/backtests/run">
+  <label>Start (ISO) <input name="start_at" required /></label>
+  <label>End (ISO) <input name="end_at" required /></label>
+  <label>Min score <input name="min_score" type="number" step="0.01" value="0.2" /></label>
+  <label>Max spread <input name="max_spread" type="number" value="10" /></label>
+  <label>Side <select name="side"><option value="yes">yes</option><option value="no">no</option></select></label>
+  <label>Qty <input name="quantity" type="number" value="1" min="1" /></label>
+  <button type="submit">Run backtest</button>
+</form>
+<table border="1" cellpadding="6">
+<thead><tr><th>ID</th><th>Created</th><th>Range</th><th>Trades</th><th>Win rate</th><th>Realized P/L</th><th>Max DD</th></tr></thead>
+<tbody>
+{% for r in runs %}
+<tr><td><a href="/backtests/{{ r.id }}">{{ r.id }}</a></td><td>{{ r.created_at }}</td><td>{{ r.start_at }} → {{ r.end_at }}</td><td>{{ r.num_trades }}</td><td>{{ '%.2f' % r.win_rate }}</td><td>{{ r.realized_pl }}</td><td>{{ r.max_drawdown }}</td></tr>
+{% else %}<tr><td colspan="7">No runs yet.</td></tr>{% endfor %}
+</tbody>
+</table>
+</body></html>
