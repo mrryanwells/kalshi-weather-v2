@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI, Form, HTTPException, Query, Request
+from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
@@ -51,140 +51,18 @@ async def shutdown() -> None:
         ws_task = None
 
 
-def _dashboard_context(
-    request: Request,
-    *,
-    series_ticker: str | None,
-    max_spread: int,
-    min_yes_qty: int,
-    min_no_qty: int,
-    min_score: float | None,
-    price_min: int,
-    price_max: int,
-    actionable_only: bool,
-    sort_by: str,
-    market_ticker: str,
-    side: str,
-    action: str,
-    limit_price: int | None,
-    quantity: int,
-) -> dict:
-    rows = scanner.latest_market_rows(
-        series_ticker=series_ticker,
-        max_spread=max_spread,
-        min_yes_qty=min_yes_qty,
-        min_no_qty=min_no_qty,
-        min_score=min_score,
-        price_min=price_min,
-        price_max=price_max,
-        actionable_only=actionable_only,
-        sort_by=sort_by,
-        limit=200,
-    )
-    return {
-        "request": request,
-        "rows": rows,
-        "series_tickers": settings.series_tickers,
-        "ws_status": WebsocketStatus(connected=state.connected, last_update_at=state.last_update_at),
-        "last_refresh_time": datetime.now(timezone.utc),
-        "filters": {
-            "series_ticker": series_ticker or "",
-            "max_spread": max_spread,
-            "min_yes_qty": min_yes_qty,
-            "min_no_qty": min_no_qty,
-            "min_score": "" if min_score is None else min_score,
-            "price_min": price_min,
-            "price_max": price_max,
-            "actionable_only": actionable_only,
-            "sort_by": sort_by,
-        },
-        "prefill": {
-            "market_ticker": market_ticker,
-            "side": side,
-            "action": action,
-            "limit_price": "" if limit_price is None else limit_price,
-            "quantity": quantity,
-        },
-    }
-
-
 @app.get("/", response_class=HTMLResponse)
-async def dashboard(
-    request: Request,
-    series_ticker: str | None = Query(default=None),
-    max_spread: int = Query(default=3),
-    min_yes_qty: int = Query(default=50),
-    min_no_qty: int = Query(default=50),
-    min_score: float | None = Query(default=None),
-    price_min: int = Query(default=15),
-    price_max: int = Query(default=85),
-    actionable_only: bool = Query(default=True),
-    sort_by: str = Query(default="score_desc"),
-    market_ticker: str = Query(default=""),
-    side: str = Query(default="yes"),
-    action: str = Query(default="buy"),
-    limit_price: int | None = Query(default=None),
-    quantity: int = Query(default=1),
-) -> HTMLResponse:
-    context = _dashboard_context(
-        request,
-        series_ticker=series_ticker,
-        max_spread=max_spread,
-        min_yes_qty=min_yes_qty,
-        min_no_qty=min_no_qty,
-        min_score=min_score,
-        price_min=price_min,
-        price_max=price_max,
-        actionable_only=actionable_only,
-        sort_by=sort_by,
-        market_ticker=market_ticker,
-        side=side,
-        action=action,
-        limit_price=limit_price,
-        quantity=quantity,
+async def dashboard(request: Request) -> HTMLResponse:
+    opportunities = scanner.latest_opportunities(limit=100)
+    return templates.TemplateResponse(
+        "dashboard.html",
+        {
+            "request": request,
+            "opportunities": opportunities,
+            "series_tickers": settings.series_tickers,
+            "ws_status": WebsocketStatus(connected=state.connected, last_update_at=state.last_update_at),
+        },
     )
-    return templates.TemplateResponse("dashboard.html", context)
-
-
-@app.get("/dashboard/opportunities", response_class=HTMLResponse)
-async def dashboard_opportunities_partial(
-    request: Request,
-    series_ticker: str | None = Query(default=None),
-    max_spread: int = Query(default=3),
-    min_yes_qty: int = Query(default=50),
-    min_no_qty: int = Query(default=50),
-    min_score: float | None = Query(default=None),
-    price_min: int = Query(default=15),
-    price_max: int = Query(default=85),
-    actionable_only: bool = Query(default=True),
-    sort_by: str = Query(default="score_desc"),
-) -> HTMLResponse:
-    context = _dashboard_context(
-        request,
-        series_ticker=series_ticker,
-        max_spread=max_spread,
-        min_yes_qty=min_yes_qty,
-        min_no_qty=min_no_qty,
-        min_score=min_score,
-        price_min=price_min,
-        price_max=price_max,
-        actionable_only=actionable_only,
-        sort_by=sort_by,
-        market_ticker="",
-        side="yes",
-        action="buy",
-        limit_price=None,
-        quantity=1,
-    )
-    return templates.TemplateResponse("_opportunities_table.html", context)
-
-
-@app.get("/markets/{ticker}", response_class=HTMLResponse)
-async def market_detail_page(request: Request, ticker: str) -> HTMLResponse:
-    history = scanner.get_market_history(ticker=ticker)
-    if not history:
-        raise HTTPException(status_code=404, detail="Market not found")
-    return templates.TemplateResponse("market_detail.html", {"request": request, "ticker": ticker, "history": history})
 
 
 @app.post("/paper/orders")
@@ -273,31 +151,8 @@ async def api_paper_trades_csv() -> Response:
 
 
 @app.get("/api/opportunities")
-async def api_opportunities(
-    series_ticker: str | None = Query(default=None),
-    max_spread: int = Query(default=3),
-    min_depth: int | None = Query(default=None),
-    min_yes_qty: int = Query(default=50),
-    min_no_qty: int = Query(default=50),
-    min_score: float | None = Query(default=None),
-    price_min: int = Query(default=15),
-    price_max: int = Query(default=85),
-    actionable_only: bool = Query(default=True),
-    sort_by: str = Query(default="score_desc"),
-) -> list[dict]:
-    return scanner.latest_market_rows(
-        series_ticker=series_ticker,
-        max_spread=max_spread,
-        min_depth=min_depth,
-        min_yes_qty=min_yes_qty,
-        min_no_qty=min_no_qty,
-        min_score=min_score,
-        price_min=price_min,
-        price_max=price_max,
-        actionable_only=actionable_only,
-        sort_by=sort_by,
-        limit=200,
-    )
+async def api_opportunities() -> list[dict]:
+    return [op.model_dump(mode="json") for op in scanner.latest_opportunities(limit=100)]
 
 
 @app.get("/api/markets/{ticker}")

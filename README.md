@@ -53,18 +53,6 @@ curl -X POST http://localhost:8000/backtests/run \
   -F quantity=1
 ```
 
-
-## Trading console filters (/)
-Default dashboard controls for decision triage:
-- `max_spread` default `3`
-- `min_yes_qty` default `50`
-- `min_no_qty` default `50`
-- `price_min` default `15`
-- `price_max` default `85`
-- `actionable_only` default `on`
-- `sort_by` values: `score_desc`, `spread_asc`, `depth_desc`, `close_soon`
-- auto-refresh every 20s via HTMX
-
 ## Main routes
 - `GET /` dashboard
 - `GET /paper/trades`

@@ -1,80 +1,31 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Kalshi Temp Scanner Console</title>
-    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-    <style>
-      body { font-family: Inter, Arial, sans-serif; margin: 1rem; }
-      .panel { border: 1px solid #ddd; padding: 0.75rem; border-radius: 6px; margin-bottom: 0.75rem; }
-      .filters { display: grid; grid-template-columns: repeat(8, minmax(120px, 1fr)); gap: 0.5rem; align-items: end; }
-      .filters label { font-size: 0.8rem; display: block; color: #444; }
-      table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-      th, td { border: 1px solid #ddd; padding: 0.35rem; font-size: 0.85rem; }
-      th { background: #f3f4f6; }
-      tr.actionable { background: #ecfdf5; }
-      tr.clickable { cursor: pointer; }
-      .topline { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
-      .muted { color: #555; font-size: 0.9rem; }
-      .btn-sm { font-size: 0.78rem; padding: 0.15rem 0.4rem; border: 1px solid #888; border-radius: 4px; text-decoration: none; background: white; }
-    </style>
-  </head>
+  <head><meta charset="utf-8" /><title>Kalshi Temp Scanner</title></head>
   <body>
-    <h1>Kalshi Trading Console (Paper)</h1>
-    <div class="topline muted">
-      <span>WebSocket: <strong>{% if ws_status.connected %}connected{% else %}disconnected{% endif %}</strong></span>
-      <span>WS last update: {{ ws_status.last_update_at or '-' }}</span>
-      <span>Last refresh: {{ last_refresh_time }}</span>
-    </div>
+    <h1>Kalshi Temp Scanner</h1>
+    <p>Series: {{ series_tickers|join(', ') }}</p>
+    <p>WebSocket: <strong>{% if ws_status.connected %}connected{% else %}disconnected{% endif %}</strong> | Last update: {{ ws_status.last_update_at or '-' }}</p>
+    <p><a href="/paper/trades">Trade journal</a> | <a href="/paper/positions">Positions</a> | <a href="/api/paper/trades.csv">CSV export</a> | <a href="/backtests">Backtests</a></p>
 
-    <div class="panel">
-      <form id="filter-form" class="filters"
-        hx-get="/dashboard/opportunities"
-        hx-target="#opportunities-table"
-        hx-trigger="change, keyup changed delay:300ms"
-        hx-include="#filter-form">
-        <div><label>max_spread</label><input name="max_spread" type="number" value="{{ filters.max_spread }}" /></div>
-        <div><label>min_yes_qty</label><input name="min_yes_qty" type="number" value="{{ filters.min_yes_qty }}" /></div>
-        <div><label>min_no_qty</label><input name="min_no_qty" type="number" value="{{ filters.min_no_qty }}" /></div>
-        <div><label>price_min</label><input name="price_min" type="number" value="{{ filters.price_min }}" /></div>
-        <div><label>price_max</label><input name="price_max" type="number" value="{{ filters.price_max }}" /></div>
-        <div><label>actionable_only</label><input name="actionable_only" type="checkbox" value="true" {% if filters.actionable_only %}checked{% endif %} /></div>
-        <div>
-          <label>sort_by</label>
-          <select name="sort_by">
-            <option value="score_desc" {% if filters.sort_by == 'score_desc' %}selected{% endif %}>score_desc</option>
-            <option value="spread_asc" {% if filters.sort_by == 'spread_asc' %}selected{% endif %}>spread_asc</option>
-            <option value="depth_desc" {% if filters.sort_by == 'depth_desc' %}selected{% endif %}>depth_desc</option>
-            <option value="close_soon" {% if filters.sort_by == 'close_soon' %}selected{% endif %}>close_soon</option>
-          </select>
-        </div>
-        <div>
-          <label>series_ticker</label>
-          <select name="series_ticker">
-            <option value="">All</option>
-            {% for series in series_tickers %}
-              <option value="{{ series }}" {% if filters.series_ticker == series %}selected{% endif %}>{{ series }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </form>
-    </div>
+    <h2>Manual Paper Order</h2>
+    <form method="post" action="/paper/orders">
+      <label>Market ticker <input name="market_ticker" required /></label>
+      <label>Side <select name="side"><option value="yes">yes</option><option value="no">no</option></select></label>
+      <label>Action <select name="action"><option value="buy">buy</option><option value="sell">sell</option></select></label>
+      <label>Limit price <input name="limit_price" type="number" min="1" max="99" required /></label>
+      <label>Quantity <input name="quantity" type="number" min="1" required /></label>
+      <label>Notes <input name="notes" /></label>
+      <button type="submit">Submit paper order</button>
+    </form>
 
-    <div class="panel">
-      <h3 style="margin: 0 0 0.5rem 0;">Quick Paper Order</h3>
-      <form id="paper-order-form" method="post" action="/paper/orders">
-        <input name="market_ticker" required placeholder="market_ticker" value="{{ prefill.market_ticker }}" />
-        <select name="side"><option value="yes" {% if prefill.side == 'yes' %}selected{% endif %}>yes</option><option value="no" {% if prefill.side == 'no' %}selected{% endif %}>no</option></select>
-        <select name="action"><option value="buy" {% if prefill.action == 'buy' %}selected{% endif %}>buy</option><option value="sell" {% if prefill.action == 'sell' %}selected{% endif %}>sell</option></select>
-        <input name="limit_price" type="number" min="1" max="99" required placeholder="limit" value="{{ prefill.limit_price }}" />
-        <input name="quantity" type="number" min="1" required placeholder="qty" value="{{ prefill.quantity }}" />
-        <input name="notes" placeholder="notes" />
-        <button type="submit">Submit Paper Trade</button>
-      </form>
-    </div>
-
-    <div id="opportunities-table" hx-get="/dashboard/opportunities" hx-trigger="load, every 20s" hx-include="#filter-form">
-      {% include '_opportunities_table.html' %}
-    </div>
+    <h2>Opportunities</h2>
+    <table border="1" cellpadding="6">
+      <thead><tr><th>Market</th><th>Score</th><th>YES Bid</th><th>NO Bid</th><th>Implied YES Ask</th><th>Spread</th><th>YES Qty</th><th>NO Qty</th><th>Close</th></tr></thead>
+      <tbody>
+      {% for row in opportunities %}
+      <tr><td>{{ row.market_ticker }}</td><td>{{ '%.4f' % row.score }}</td><td>{{ row.best_yes_bid }}</td><td>{{ row.best_no_bid }}</td><td>{{ row.implied_yes_ask }}</td><td>{{ row.spread }}</td><td>{{ row.top_yes_qty }}</td><td>{{ row.top_no_qty }}</td><td>{{ row.close_time or '-' }}</td></tr>
+      {% else %}<tr><td colspan="9">No data yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
   </body>
 </html>
