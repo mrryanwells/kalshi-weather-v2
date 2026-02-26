@@ -1,0 +1,13 @@
+<!doctype html>
+<html><body>
+<h1>Market {{ ticker }}</h1>
+<p><a href="/">Back to dashboard</a></p>
+<table border="1" cellpadding="6">
+<thead><tr><th>captured_at</th><th>yes_bid</th><th>implied_yes_ask</th><th>spread</th><th>yes_qty</th><th>no_qty</th><th>score</th></tr></thead>
+<tbody>
+{% for row in history %}
+<tr><td>{{ row.captured_at }}</td><td>{{ row.best_yes_bid }}</td><td>{{ row.implied_yes_ask }}</td><td>{{ row.spread }}</td><td>{{ row.top_yes_qty }}</td><td>{{ row.top_no_qty }}</td><td>{{ row.score }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</body></html>
