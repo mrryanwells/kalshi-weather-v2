@@ -1,0 +1,12 @@
+<!doctype html><html><body>
+<h1>Paper Positions</h1>
+<p><a href="/">Back</a></p>
+<table border="1" cellpadding="6">
+<thead><tr><th>Market</th><th>Side</th><th>Status</th><th>Qty</th><th>Avg Cost</th><th>Mark</th><th>Realized P/L</th><th>Unrealized P/L</th></tr></thead>
+<tbody>
+{% for row in rows %}
+<tr><td>{{ row.market_ticker }}</td><td>{{ row.side }}</td><td>{{ row.status }}</td><td>{{ row.quantity }}</td><td>{{ row.avg_cost }}</td><td>{{ row.mark_price }}</td><td>{{ row.realized_pl }}</td><td>{{ row.unrealized_pl }}</td></tr>
+{% else %}<tr><td colspan="8">No positions.</td></tr>{% endfor %}
+</tbody>
+</table>
+</body></html>

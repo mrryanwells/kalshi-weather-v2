@@ -1,0 +1,43 @@
+<table>
+  <thead>
+    <tr>
+      <th>market_ticker</th>
+      <th>series_ticker</th>
+      <th>best_yes_bid</th>
+      <th>implied_yes_ask</th>
+      <th>implied_no_ask</th>
+      <th>spread</th>
+      <th>top_yes_qty</th>
+      <th>top_no_qty</th>
+      <th>score</th>
+      <th>last_update_time</th>
+      <th>age_seconds</th>
+      <th>reason</th>
+      <th>actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+      <tr class="clickable {% if row.actionable %}actionable{% endif %}" onclick="window.location='/markets/{{ row.market_ticker }}'">
+        <td>{{ row.market_ticker }}</td>
+        <td>{{ row.series_ticker }}</td>
+        <td>{{ row.best_yes_bid }}</td>
+        <td>{{ row.implied_yes_ask }}</td>
+        <td>{{ row.implied_no_ask }}</td>
+        <td>{{ row.spread }}</td>
+        <td>{{ row.top_yes_qty }}</td>
+        <td>{{ row.top_no_qty }}</td>
+        <td>{{ '%.4f' % row.score }}</td>
+        <td>{{ row.last_update_time }}</td>
+        <td>{{ row.age_seconds }}</td>
+        <td>{{ row.reason }}</td>
+        <td>
+          <a class="btn-sm" href="/?market_ticker={{ row.market_ticker }}&side=yes&action=buy&limit_price={{ row.implied_yes_ask }}&quantity=1#paper-order-form" onclick="event.stopPropagation();">Paper BUY YES @ Ask</a>
+          <a class="btn-sm" href="/?market_ticker={{ row.market_ticker }}&side=no&action=buy&limit_price={{ row.implied_no_ask }}&quantity=1#paper-order-form" onclick="event.stopPropagation();">Paper BUY NO @ Ask</a>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="13">No opportunities matched filters.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
